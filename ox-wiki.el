@@ -4,7 +4,7 @@
 ;; URL: https://github.com/7800uk/ox-wiki
 ;; Version: 0.1.0
 ;; Keywords: outlines, hypermedia, wp
-;; Package-Requires: ((emacs "27.1") (org "9.6"))
+;; Package-Requires: ((emacs "29.1"))
 ;; SPDX-License-Identifier: GPL-2.0-or-later
 
 ;;; Commentary:
@@ -24,9 +24,14 @@
 ;; stylesheets are MediaWiki's own, vendored under vendor/ and rebuilt with
 ;; their icons inlined by tools/build-css.py.
 ;;
+;; Org 9.6 or newer is wanted, which is what Emacs 29 bundles.  It is not
+;; declared as a package dependency on purpose: naming `org' there makes a
+;; package manager fetch and build a second Org, which is worth avoiding for a
+;; version that is already in the box.
+;;
 ;; Usage:
 ;;
-;;   (add-to-list 'load-path "~/Orgfiles/Themes/ox-wiki")
+;;   (add-to-list 'load-path "~/Development/ox-wiki")
 ;;   (require 'ox-wiki)
 ;;
 ;; then `C-c C-e w w' from any Org buffer.
