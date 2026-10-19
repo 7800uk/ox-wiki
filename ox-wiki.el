@@ -291,6 +291,20 @@ installed like any other package."
   (if (or (null value) (equal value "")) ""
     (format " %s=\"%s\"" name (org-wiki--esc value))))
 
+(defun org-wiki--untag (html)
+  "Return HTML as plain text, for somewhere no markup is allowed.
+Page titles are HTML, because an Org title can carry emphasis, but the
+<title> element can hold neither tags nor escaped entities."
+  (let ((s (replace-regexp-in-string "<[^>]*>" "" (or html ""))))
+    (setq s (replace-regexp-in-string
+             "&#\\([0-9]+\\);"
+             (lambda (m) (string (string-to-number (match-string 1 m))))
+             s))
+    (dolist (pair '(("&lt;" . "<") ("&gt;" . ">") ("&quot;" . "\"")
+                    ("&#39;" . "'") ("&nbsp;" . " ") ("&amp;" . "&")))
+      (setq s (replace-regexp-in-string (car pair) (cdr pair) s t t)))
+    s))
+
 (defun org-wiki--slug (string)
   "Turn STRING into something usable as an identifier."
   (let ((s (replace-regexp-in-string "[^[:alnum:]]+" "-" (or string ""))))
@@ -662,7 +676,7 @@ last word."
      "<head>\n"
      (or (plist-get page :head)
          (format "<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>%s</title>\n"
-                 (org-wiki--esc (plist-get page :title))))
+                 (org-wiki--esc (org-wiki--untag (plist-get page :title)))))
      (org-wiki--style-element page)
      "</head>\n"
      (funcall (plist-get skin :page) page)
