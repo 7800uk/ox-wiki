@@ -1,0 +1,23 @@
+#+TITLE: Demo sidebar
+
+Each first-level heading below becomes a portlet in the sidebar, and each list
+item under it becomes a link.  Anything else in the file is ignored, so notes
+like this one are fine.
+
+* Navigation
+- [[file:Demo.html][Main page]]
+- [[file:Demo-history.html][Recent changes]]
+- [[https://orgmode.org/][Org mode]]
+
+* This page
+- [[file:Demo-source.html][View source]]
+- [[file:Demo-source-latex.html][LaTeX source]]
+- [[file:Demo.pdf][Download PDF]]
+
+* Skins
+- [[file:Demo.html][Vector legacy]]
+- [[file:Demo-monobook.html][MonoBook]]
+
+* Tools
+- [[javascript:print();][Printable version]]
+- Nothing to link to

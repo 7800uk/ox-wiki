@@ -1,0 +1,418 @@
+/*
+ * org-wiki.css -- Org's own markup, mapped onto a MediaWiki skin.
+ *
+ * The skins' stylesheets are MediaWiki's, vendored unchanged; this file is the
+ * only hand-written one.  It exists because Org emits markup MediaWiki never
+ * does -- `div.outline-2', `ul.org-ul', `div.org-src-container', `div.footdef',
+ * htmlize's syntax classes -- and because Org's default stylesheet, which would
+ * normally cover those, is switched off by ox-wiki.el.
+ *
+ * It is loaded after whichever skin is in use, and after MediaWiki's diff and
+ * edit-font styles, so it is also where the handful of rules live that no
+ * vendored module covers: the history list, the source view's form, and the
+ * Codex button on it.
+ *
+ * Content rules are scoped to .mw-parser-output, which every skin has, so none
+ * of them can reach the chrome.  Colours are taken from the skin's own custom
+ * properties where it defines them, so a change there carries through.
+ */
+
+/* ------------------------------------------------------------------ Sections */
+
+/* Org wraps each heading and its body in a div.  Vector styles headings by
+   element name, so the wrappers only need to not introduce spacing of their
+   own. */
+.mw-parser-output [class^='outline-'],
+.mw-parser-output [class^='outline-text-'] {
+	margin: 0;
+}
+
+.mw-parser-output > :first-child {
+	margin-top: 0;
+}
+
+/* Section numbers are off by default (#+OPTIONS: num:t brings them back); when
+   they are on they should not be heavier than the heading around them. */
+.mw-parser-output [class^='section-number-'] {
+	font-weight: inherit;
+}
+
+/* --------------------------------------------------------------- Inline text */
+
+.mw-parser-output .underline {
+	text-decoration: underline;
+}
+
+.mw-parser-output .verbatim {
+	font-family: monospace, monospace;
+}
+
+/* Org's timestamps and tags have no wiki counterpart; make them quiet. */
+.mw-parser-output .timestamp,
+.mw-parser-output .timestamp-kwd {
+	color: var( --color-subtle, #54595d );
+	font-family: monospace, monospace;
+	font-size: 92%;
+}
+
+.mw-parser-output .tag {
+	font-family: monospace, monospace;
+	font-size: 85%;
+	font-weight: normal;
+	float: right;
+}
+
+.mw-parser-output .tag > span {
+	background-color: var( --background-color-neutral, #eaecf0 );
+	border: 1px solid var( --border-color-base, #a2a9b1 );
+	border-radius: 2px;
+	margin-left: 0.3em;
+	padding: 0 0.4em;
+}
+
+.mw-parser-output .todo,
+.mw-parser-output .done {
+	border-radius: 2px;
+	font-family: monospace, monospace;
+	font-size: 85%;
+	letter-spacing: 0.05em;
+	padding: 0.1em 0.4em;
+	vertical-align: 0.1em;
+}
+
+.mw-parser-output .todo {
+	background-color: #fee7e6;
+	color: #b32424;
+}
+
+.mw-parser-output .done {
+	background-color: #d5fdf4;
+	color: #14866d;
+}
+
+.mw-parser-output .priority {
+	color: var( --color-subtle, #54595d );
+	font-family: monospace, monospace;
+	font-size: 85%;
+}
+
+/* -------------------------------------------------------------------- Lists */
+
+/* Checkbox items carry their own marker, so drop the square bullet and pull
+   the item back into the margin the bullet left behind. */
+.mw-parser-output li.on,
+.mw-parser-output li.off,
+.mw-parser-output li.trans {
+	list-style: none;
+	margin-inline-start: -1.6em;
+}
+
+.mw-parser-output li > input[ type='checkbox' ] {
+	margin-right: 0.45em;
+	vertical-align: -0.1em;
+}
+
+/* Org's description lists put the term and its definition on separate lines
+   already; dt/dd are styled by the skin. */
+
+/* ------------------------------------------------------------------- Tables */
+
+/* ox-vector.el gives every table MediaWiki's `wikitable' class.  Org's
+   per-column alignment classes still need meaning. */
+.mw-parser-output td.org-left,
+.mw-parser-output th.org-left {
+	text-align: left;
+}
+
+.mw-parser-output td.org-center,
+.mw-parser-output th.org-center {
+	text-align: center;
+}
+
+.mw-parser-output td.org-right,
+.mw-parser-output th.org-right {
+	text-align: right;
+}
+
+.mw-parser-output .wikitable > caption {
+	caption-side: top;
+	padding: 0.2em 0.4em 0.4em;
+	text-align: left;
+}
+
+.mw-parser-output .table-number,
+.mw-parser-output .figure-number,
+.mw-parser-output .listing-number {
+	font-style: italic;
+	font-weight: bold;
+}
+
+/* -------------------------------------------------------------------- Code */
+
+.mw-parser-output .org-src-container {
+	margin: 1em 0;
+}
+
+/* Org nests <code> inside <pre>, and the skin gives both a box. */
+.mw-parser-output pre > code {
+	background: none;
+	border: 0;
+	border-radius: 0;
+	color: inherit;
+	display: block;
+	padding: 0;
+}
+
+.mw-parser-output pre.example,
+.mw-parser-output pre.src {
+	margin: 1em 0;
+}
+
+/* --------------------------------------------------- Figures and other blocks */
+
+/* Org's figures become something close to MediaWiki's framed thumbnail. */
+.mw-parser-output .figure,
+.mw-parser-output figure {
+	background-color: var( --background-color-interactive-subtle, #f8f9fa );
+	border: 1px solid var( --border-color-subtle, #c8ccd1 );
+	display: table;
+	font-size: 94%;
+	margin: 0.5em auto 1.3em;
+	padding: 3px;
+	text-align: center;
+}
+
+.mw-parser-output .figure p,
+.mw-parser-output figure > img {
+	margin: 0;
+}
+
+.mw-parser-output .figure > p + p,
+.mw-parser-output figcaption {
+	line-height: 1.4em;
+	padding: 3px;
+	text-align: left;
+}
+
+.mw-parser-output .org-svg {
+	width: 90%;
+}
+
+.mw-parser-output .org-center {
+	margin-left: auto;
+	margin-right: auto;
+	text-align: center;
+}
+
+.mw-parser-output p.verse {
+	margin-left: 1.6em;
+	white-space: pre-wrap;
+}
+
+/* Special blocks (#+begin_note and friends) read as asides. */
+.mw-parser-output .note,
+.mw-parser-output .warning,
+.mw-parser-output .tip,
+.mw-parser-output .caution,
+.mw-parser-output .important {
+	background-color: var( --background-color-neutral-subtle, #f8f9fa );
+	border-left: 4px solid var( --border-color-base, #a2a9b1 );
+	margin: 1em 0;
+	padding: 0.5em 1em;
+}
+
+.mw-parser-output .warning,
+.mw-parser-output .caution {
+	border-left-color: #b32424;
+}
+
+.mw-parser-output .inlinetask {
+	border: 1px solid var( --border-color-base, #a2a9b1 );
+	margin: 1em 0;
+	padding: 0.5em;
+}
+
+/* ---------------------------------------------------------------- Footnotes */
+
+/* MediaWiki brackets its reference marks: [1], not a bare superscript 1. */
+.mw-parser-output a.footref::before,
+.mw-parser-output a.footnum::before {
+	content: '[';
+}
+
+.mw-parser-output a.footref::after,
+.mw-parser-output a.footnum::after {
+	content: ']';
+}
+
+.mw-parser-output #text-footnotes {
+	font-size: 90%;
+	margin-top: 0.5em;
+}
+
+.mw-parser-output .footdef {
+	margin-bottom: 0.4em;
+	padding-left: 1.6em;
+	text-indent: -1.6em;
+}
+
+.mw-parser-output .footdef .footpara,
+.mw-parser-output .footdef p.footpara {
+	display: inline;
+	margin: 0;
+}
+
+/* -------------------------------------------------- Syntax highlighting (css)
+
+   ox-vector.el asks htmlize for class names rather than inline styles, so the
+   palette lives here instead of following whatever theme Emacs happens to be
+   wearing.  The colours are Pygments' default scheme, which is what MediaWiki's
+   SyntaxHighlight extension serves. */
+
+.mw-parser-output .org-comment,
+.mw-parser-output .org-comment-delimiter,
+.mw-parser-output .org-doc { color: #408080; font-style: italic; }
+.mw-parser-output .org-keyword,
+.mw-parser-output .org-rainbow-delimiters-depth-1 { color: #008000; font-weight: bold; }
+.mw-parser-output .org-builtin,
+.mw-parser-output .org-preprocessor { color: #aa22ff; font-weight: bold; }
+.mw-parser-output .org-string { color: #ba2121; }
+.mw-parser-output .org-constant { color: #880000; }
+.mw-parser-output .org-function-name { color: #0000ff; }
+.mw-parser-output .org-variable-name { color: #19177c; }
+.mw-parser-output .org-type { color: #b00040; }
+.mw-parser-output .org-negation-char { color: #666666; }
+.mw-parser-output .org-warning { color: #b32424; font-weight: bold; }
+.mw-parser-output .org-highlight-numbers-number { color: #666666; }
+.mw-parser-output .org-css-selector { color: #0000ff; font-weight: bold; }
+.mw-parser-output .org-css-property { color: #b00040; }
+
+/* ------------------------------------------------------------------- Chrome */
+
+/* The sidebar logo is a data: URI in vector-legacy.css, so it needs no size
+   hint; this only keeps it off the portlet below on short viewports. */
+#p-logo a {
+	background-size: 135px auto;
+}
+
+/* Nothing in the chrome is a real wiki control, so the cursor should not
+   promise more than a link. */
+#mw-panel,
+#mw-head {
+	cursor: default;
+}
+
+/* MediaWiki hides the tagline by default and Wikipedia switches it back on in
+   its own site styles.  ox-vector.el deliberately puts something there, so do
+   the same. */
+#siteSub {
+	display: block;
+}
+
+/* ------------------------------------------------- The source view's form
+
+   MediaWiki serves the textarea's font from `mediawiki.editfont.styles', which
+   is vendored, but the form around it and the button under it come from Codex
+   and from the edit-action module, which are not.  These few rules stand in for
+   them. */
+
+.mw-editform {
+	margin-top: 0.8em;
+}
+
+.mw-editform textarea {
+	border: 1px solid var( --border-color-base, #a2a9b1 );
+	border-radius: 2px;
+	box-sizing: border-box;
+	line-height: 1.4;
+	padding: 0.5em;
+	width: 100%;
+}
+
+.mw-editform .editOptions {
+	background-color: var( --background-color-interactive-subtle, #f8f9fa );
+	border: 1px solid var( --border-color-subtle, #c8ccd1 );
+	border-top: 0;
+	margin-bottom: 1em;
+	padding: 1em 1em 1.5em;
+}
+
+.cdx-button {
+	background-color: var( --background-color-interactive-subtle, #f8f9fa );
+	border: 1px solid var( --border-color-base, #a2a9b1 );
+	border-radius: 2px;
+	color: var( --color-base, #202122 );
+	cursor: pointer;
+	display: inline-block;
+	font-family: inherit;
+	font-size: inherit;
+	font-weight: bold;
+	line-height: 1.4;
+	padding: 0.4em 0.9em;
+	text-decoration: none;
+}
+
+.cdx-button--weight-primary.cdx-button--action-progressive {
+	background-color: #36c;
+	border-color: #36c;
+	color: #fff;
+}
+
+.cdx-button--weight-primary.cdx-button--action-progressive:hover {
+	background-color: #447ff5;
+	border-color: #447ff5;
+	color: #fff;
+}
+
+/* --------------------------------------------------------- The history page
+
+   `mediawiki.action.history.styles' is not vendored; this is the part of it
+   that the generated history page actually uses. */
+
+#pagehistory {
+	list-style: none;
+	margin-left: 0;
+	padding-left: 0;
+}
+
+#pagehistory li {
+	border: 1px solid transparent;
+	padding: 0.2em 0;
+}
+
+#pagehistory li:target {
+	background-color: var( --background-color-progressive-subtle, #eaf3ff );
+}
+
+.mw-changeslist-date {
+	font-weight: bold;
+}
+
+.history-user {
+	color: var( --color-subtle, #54595d );
+}
+
+#pagehistory .mw-revid {
+	font-size: 85%;
+}
+
+.mw-diff-section {
+	margin: 1.5em 0;
+	scroll-margin-top: 1em;
+}
+
+.mw-diff-section .diff {
+	width: 100%;
+}
+
+/* An empty side of a diff row.  MediaWiki leaves these unstyled because its own
+   markup always fills both columns; ours does not. */
+.diff td.diff-empty {
+	background-color: var( --background-color-neutral-subtle, #f8f9fa );
+}
+
+/* The tagline sits flush against the first paragraph once it is visible, since
+   MediaWiki never shows it unstyled. */
+#siteSub {
+	margin-bottom: 0.6em;
+}

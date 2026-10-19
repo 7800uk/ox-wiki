@@ -1,0 +1,4 @@
+# Everything a build produces.  demo/build.el writes here; nothing in it is
+# version-controlled, and no exported page belongs anywhere else in the tree.
+/build/
+*.elc

@@ -1,0 +1,249 @@
+#+TITLE: ox-wiki — Org HTML export in MediaWiki's skins
+#+OPTIONS: toc:2
+
+An Org export backend that makes an exported file look like a MediaWiki article:
+content column, tab row, sidebar, wiki footer.  Two skins ship with it —
+=vector= (Vector legacy, the 2010 Vector, which is what =vector= still means in
+MediaWiki next to =vector-2022=) and =monobook= — and the skin is a parameter, not
+a fork; see [[file:SKINS.org][SKINS.org]] for writing a third, in this repository or your own.
+
+Beside the article it writes the pages its tabs point at: a read-only view of
+the Org source and of the LaTeX export, a PDF, and, for a git-tracked file, a
+revision history with MediaWiki-style diffs.
+
+Each page is a single self-contained =.html= file.  The stylesheet, every icon,
+the logo and the footer buttons are inlined, so there is nothing to copy
+alongside.
+
+* Using it
+
+With straight.el:
+
+#+begin_src emacs-lisp
+(use-package ox-wiki
+  :straight (ox-wiki :host github :repo "7800uk/ox-wiki"
+                     :files ("*.el" "COPYING" "css" "images"))
+  :after ox)
+#+end_src
+
+From a clone, without a package manager:
+
+#+begin_src emacs-lisp
+(add-to-list 'load-path "~/Development/ox-wiki")
+(require 'ox-wiki)
+#+end_src
+
+Then from any Org buffer:
+
+| Key         | Does                         |
+|-------------+------------------------------|
+| =C-c C-e w w= | export to a file             |
+| =C-c C-e w W= | export to a buffer           |
+| =C-c C-e w o= | export to a file and open it |
+
+For =org-publish=, use =org-wiki-publish-to-html= as the =:publishing-function=.
+The ordinary HTML backend is untouched; =C-c C-e h h= still does what it did.
+
+To see it, rebuild the demo and open =demo/Demo.html=:
+
+#+begin_src sh
+emacs -Q --batch -l demo/build.el
+#+end_src
+
+* Per-file settings
+
+All of these have a defcustom of the same name behind them
+(=#+WIKI_TYPE= ↔ =org-wiki-type=), so a wiki-wide default is set once and a
+page overrides it only where it differs.
+
+| Keyword              | What it sets                                             |
+|----------------------+----------------------------------------------------------|
+| =#+WIKI_SKIN=       | =vector= or =monobook=                                       |
+| =#+WIKI_SITENAME=   | the name in the search box                               |
+| =#+WIKI_TAGLINE=    | the line under the page title                            |
+| =#+WIKI_TYPE=       | what the leftmost tab says; default "Article"            |
+| =#+WIKI_LOGO=       | an image file to use as the wiki logo                    |
+| =#+WIKI_HOME=       | where the logo points                                    |
+| =#+WIKI_SIDEBAR=    | an Org file describing the sidebar                       |
+| =#+WIKI_BUTTONS=    | a footer button; repeat the line for more                |
+| =#+WIKI_SEARCH=     | where the search box posts                               |
+| =#+WIKI_LATEX=      | nil drops the LaTeX source and the PDF                   |
+| =#+WIKI_PDF=        | nil keeps the LaTeX source but drops the PDF             |
+| =#+WIKI_GIT=        | nil drops the revision history                           |
+
+** The logo
+
+#+begin_example
+,#+WIKI_LOGO: logo.svg
+#+end_example
+
+Looked for beside the Org file first, then in this package, then as an absolute
+path.  It is inlined, so any raster or vector format a browser reads will do.
+=images/logo.svg= is the fallback; replace that file to change the default for
+every page at once.
+
+** Footer buttons
+
+One per line, each a Lisp list of =(IMAGE HREF ALT)= — =HREF= and =ALT= optional:
+
+#+begin_example
+,#+WIKI_BUTTONS: ("images/poweredby_org.svg" "https://orgmode.org/" "Powered by Org mode")
+,#+WIKI_BUTTONS: ("cc-by-sa.svg" "https://creativecommons.org/licenses/by-sa/4.0/" "CC BY-SA 4.0")
+#+end_example
+
+Images are resolved and inlined the same way as the logo.
+
+** The sidebar
+
+#+begin_example
+,#+WIKI_SIDEBAR: Sidebar.org
+#+end_example
+
+Each first-level heading in that file becomes a portlet, and each list item
+under it becomes a link.  An item with no link becomes plain text.  Anything
+else in the file — a title, prose between the headings — is ignored, so the
+file is readable on its own:
+
+#+begin_example
+,* Navigation
+- [[file:index.html][Main page]]
+- [[file:all.html][All pages]]
+
+,* Tools
+- [[javascript:print();][Printable version]]
+#+end_example
+
+The path is resolved against the exported file's directory.  Without the
+keyword, =org-wiki-default-sidebar= is used.  Note that MediaWiki hides the first
+portlet's heading — the one right under the logo — which is why "Navigation"
+does not appear above its links.  That is the skin, not a bug.
+
+* The pages the tabs lead to
+
+For =Foo.org=, an export writes:
+
+| File                      | Tab                              |
+|---------------------------+----------------------------------|
+| =Foo.html=                  | Read                             |
+| =Foo-source.html=           | View source → Org source         |
+| =Foo-source-latex.html=     | View source → LaTeX source       |
+| =Foo.pdf=                   | View PDF                         |
+| =Foo-history.html=          | View history                     |
+
+The source views imitate MediaWiki's read-only "view source" page, which is the
+closest thing a wiki has to what this is.  There is nothing to save to, so the
+button a wiki would label "Publish changes" says *Download source* and hands you
+the text as a =data:= URI — no server involved.
+
+The history page reads =git log= for the file and renders each revision's diff in
+MediaWiki's two-column diff table, with =cur= and =prev= links that jump to them.
+Renames are not followed, so a file only has history under the path it has now,
+and only the revisions listed get diffs (=org-wiki-history-limit=, 40 by
+default).
+
+A tab appears only when it can: no LaTeX binary means no PDF tab, an untracked
+file means no history tab, and =#+WIKI_LATEX: nil= or =#+WIKI_GIT: nil= turns
+them off by hand.  If LaTeX is installed but the run fails, that is reported and
+the PDF tab is left pointing at a file that is not there — the article is
+rendered before LaTeX is run, so the tab has already been decided.
+
+* What is in here
+
+| Path                           | What it is                                                   |
+|--------------------------------+--------------------------------------------------------------|
+| =ox-wiki.el=                        | the backend: options, skin dispatch, page assembly, TOC       |
+| =ox-wiki-pages.el=                  | the source views, the PDF, the history and the diff pages     |
+| =ox-wiki-skin-vector.el=            | the Vector legacy skin                                        |
+| =ox-wiki-skin-monobook.el=          | the MonoBook skin                                             |
+| =SKINS.org=                         | how to write a third                                          |
+| =css/org-wiki.css=                  | the only hand-written CSS: Org's markup mapped onto the skins |
+| =css/vector.css=, =css/monobook.css=  | *generated.* The skins' own stylesheets                       |
+| =css/mediawiki-extras.css=          | *generated.* MediaWiki's diff and edit-font styles            |
+| =vendor/=                           | those stylesheets and their icons, exactly as served          |
+| =images/=                           | the default logo and footer badge                             |
+| =tools/build-css.py=                | rebuilds everything in =css/= except =org-wiki.css=              |
+| =demo/=                             | a crowded page in both skins, and =build.el= to rebuild it      |
+| =COPYING=                           | GPL-2.0, from the Vector repository                           |
+
+Only =*.el=, =css/= and =images/= are needed at run time; =vendor/=, =tools/= and
+=demo/= are build-time only, which is why the straight recipe above ships just
+the three.
+
+Nothing generated is checked in.  =demo/= holds only sources, and
+=demo/build.el= writes every page into =build/=, which is ignored.
+
+* Where the stylesheets came from
+
+=vendor/*/\*.raw.css= are ResourceLoader builds, fetched from en.wikipedia.org on
+2026-10-19:
+
+: .../load.php?modules=mediawiki.skins.legacy|skins.vector.styles.legacy&only=styles&skin=vector
+: .../load.php?modules=mediawiki.skins.legacy|skins.monobook.styles&only=styles&skin=monobook
+: .../load.php?modules=mediawiki.diff.styles|mediawiki.editfont.styles|mediawiki.action.styles|mediawiki.interface.helpers.styles&only=styles&skin=vector
+
+They are compiled artefacts rather than the LESS sources in
+[[https://github.com/wikimedia/mediawiki-skins-Vector][mediawiki-skins-Vector]] and
+[[https://github.com/wikimedia/mediawiki-skins-MonoBook][mediawiki-skins-MonoBook]],
+because those import variables and mixins from MediaWiki core and cannot be
+compiled on their own.  The icons under =vendor/*/images/= *are* from those
+repositories, plus a few from MediaWiki core's =mediawiki.skinning=, and they sit
+in =vendor/<skin>/images/=.
+
+=tools/build-css.py= turns each raw file into the matching file in =css/=.  It changes
+nothing but the =url()= references: icons become =data:= URIs, and the project
+logo is blanked so the per-page logo rule can take over.  Keep edits out of the
+generated files — they are overwritten — and put them in =css/org-wiki.css=.
+
+To refresh against a newer upstream, replace the raw file and re-run:
+
+#+begin_src sh
+python3 tools/build-css.py
+#+end_src
+
+* Why a backend rather than ox-html and a stylesheet
+
+=org-html-template= hardcodes a skeleton — preamble div, content div, postamble
+div — and a wiki skin needs a different one:
+
+#+begin_src html
+<div id="content" class="mw-body" role="main">
+  <h1 id="firstHeading" class="firstHeading">…</h1>
+  <div id="bodyContent" class="vector-body">
+    <div id="mw-content-text" class="mw-body-content">
+      <div class="mw-parser-output"> … </div>
+#+end_src
+
+Those wrappers carry most of the skin's typography (=.vector-body p=,
+=.vector-body h2=, =.mw-parser-output a.external= and several hundred more), and
+they cannot be opened in a preamble and closed in a postamble: Org wraps the
+postamble in its own div *inside* the still-open one.  Retargeting the selectors
+instead would mean forking the vendored stylesheet by hand, which is exactly
+what keeping it a regenerable copy avoids.
+
+So the backend replaces two functions, =template= and =inner-template=, and
+inherits every other transcoder from =ox-html=.  On top of that it:
+
+- numbers the table of contents the way MediaWiki does — in MediaWiki's own
+  =#toc= markup, with the pure-CSS =[hide]= toggle — while leaving the headings
+  unnumbered, which is what a wiki article looks like.  =#+OPTIONS: num:t= still
+  numbers the headings;
+- puts the contents box after the lead paragraphs rather than above them;
+- gives every table MediaWiki's =wikitable= class, unless an =#+ATTR_HTML= line
+  already set one;
+- marks absolute links =class="external text"=, which is what draws the arrow;
+- heads the footnote section "References" instead of "Footnotes";
+- asks htmlize for class names rather than inline styles, so code colours come
+  from =css/org-wiki.css= instead of from whatever theme Emacs is wearing.
+  Syntax highlighting needs [[https://github.com/hniksic/emacs-htmlize][htmlize]];
+  without it, source blocks export as plain text.
+
+* Licence
+
+Everything under =vendor/=, and everything the generated stylesheets are built
+from, is MediaWiki's: copyright the MediaWiki contributors, GPL-2.0-or-later;
+see [[file:COPYING][COPYING]].  =ox-wiki.el=, =ox-wiki-pages.el=, the =ox-wiki-skin-*.el= files,
+=css/org-wiki.css=, =tools/build-css.py= and =images/= are ours and carry the same
+licence, so the whole directory is GPL-2.0-or-later.
+
+"MediaWiki" and "Wikipedia" are trademarks of the Wikimedia Foundation.  This is
+not a Wikimedia product, and the footer says so.

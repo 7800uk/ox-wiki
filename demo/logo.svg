@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- The demo's own logo, to show that #+ORGWIKI_LOGO is resolved beside the
+     Org file before it is looked for in the package. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="135" height="135" viewBox="0 0 135 135">
+  <circle cx="67.5" cy="58" r="44" fill="#eaf3fb" stroke="#36c" stroke-width="2"/>
+  <g stroke="#36c" stroke-width="2.4" fill="none" stroke-linecap="round">
+    <path d="M44 32 v52"/><path d="M44 44 h18"/><path d="M44 58 h18"/><path d="M44 72 h18"/>
+  </g>
+  <g fill="#36c">
+    <circle cx="44" cy="32" r="5.5"/>
+    <circle cx="68" cy="44" r="4.5"/><circle cx="68" cy="58" r="4.5"/><circle cx="68" cy="72" r="4.5"/>
+  </g>
+  <g fill="#72777d">
+    <rect x="77" y="41.5" width="18" height="2.6" rx="1.3"/>
+    <rect x="77" y="55.5" width="13" height="2.6" rx="1.3"/>
+    <rect x="77" y="69.5" width="18" height="2.6" rx="1.3"/>
+  </g>
+  <text x="67.5" y="124" text-anchor="middle"
+        font-family="Linux Libertine, Georgia, Times, serif" font-size="20" fill="#202122">Demopedia</text>
+</svg>

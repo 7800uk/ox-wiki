@@ -1,0 +1,138 @@
+#+TITLE: Dundee
+#+AUTHOR: Jacob Walchuk
+#+LANGUAGE: en
+#+OPTIONS: toc:3 H:4 ^:nil
+
+#+WIKI_SKIN: vector
+#+WIKI_SITENAME: Demopedia
+#+WIKI_TAGLINE: From Demopedia, the Org-mode encyclopedia
+#+WIKI_TYPE: Article
+#+WIKI_LOGO: logo.svg
+#+WIKI_HOME: Demo.html
+#+WIKI_SIDEBAR: Sidebar.org
+#+WIKI_BUTTONS: ("images/poweredby_org.svg" "https://orgmode.org/" "Powered by Org mode")
+#+WIKI_BUTTONS: ("cc-by-sa.svg" "https://creativecommons.org/licenses/by-sa/4.0/" "CC BY-SA 4.0")
+
+A demonstration page for the Vector-legacy Org export theme. It is deliberately
+crowded: every construct below exists to check that some part of the stylesheet
+still looks like a wiki article. The text itself is filler.
+
+* Etymology and early history
+:PROPERTIES:
+:CUSTOM_ID: etymology
+:END:
+
+The name is usually read as /dun/ ("fort") with a second element of disputed
+origin. A long paragraph follows so that line length, leading, and the serif
+headings above can be judged against a real column of text rather than against
+a single sentence. Links come in two kinds: an [[#governance][internal one]],
+which stays the default blue, and an [[https://en.wikipedia.org/wiki/Dundee][external
+one]], which MediaWiki marks with a small arrow.
+
+** The burgh charter
+
+Three things are worth noting:
+
+- the charter is undated,
+- the earliest copy is a fifteenth-century transcript, and
+- the witness list is incomplete.
+
+*Bold*, /italic/, =verbatim=, ~code~, +struck out+, and _underlined_ all appear
+in running text, as does a footnote[fn:1] and a second one[fn:2].
+
+** Population
+
+#+CAPTION: Recorded population at selected censuses.
+#+NAME: tbl-population
+| Year |  Population | Change |
+|------+-------------+--------|
+| 1801 |      26,084 | —      |
+| 1851 |      78,931 | +202%  |
+| 1901 |     161,173 | +104%  |
+| 1951 |     177,340 | +10%   |
+| 2001 |     145,663 | −18%   |
+| 2021 |     148,210 | +2%    |
+
+Tables get MediaWiki's =wikitable= class, so they pick up the grey header row
+and the hairline borders.
+
+* Governance
+:PROPERTIES:
+:CUSTOM_ID: governance
+:END:
+
+** Council
+
+#+begin_quote
+The council consists of twenty-nine members elected from eight multi-member
+wards under the single transferable vote.
+
+--- /Local Government etc. (Scotland) Act 1994/
+#+end_quote
+
+** Wards
+
+1. Strathmartine
+2. Lochee
+3. West End
+   1. a nested item, to check the numbering
+   2. and another
+4. Coldside
+
+A definition list:
+
+- Provost :: the civic head of the council
+- Convener :: chairs a committee
+- Ward :: an electoral division returning three or four councillors
+
+* Technical notes
+:PROPERTIES:
+:CUSTOM_ID: technical
+:END:
+
+** Source blocks
+
+#+begin_src emacs-lisp
+(defun org-vector-demo (name)
+  "Say hello to NAME, in a source block, to check code styling."
+  (message "hello, %s" name))
+#+end_src
+
+** Example blocks
+
+#+begin_example
+$ org-export --backend vector Demo.org
+wrote Demo.html (71 KiB)
+#+end_example
+
+** Checkboxes
+
+- [X] vendored stylesheet
+- [X] page skeleton
+- [-] chrome, which is still hardcoded
+- [ ] whatever you tell me next
+
+** A fixed-width region
+
+: this line is literal
+: and so is this one
+
+** Horizontal rule
+
+-----
+
+** Mathematics
+
+Inline $E = mc^2$, and a display equation:
+
+\begin{equation}
+\int_{-\infty}^{\infty} e^{-x^2}\, dx = \sqrt{\pi}
+\end{equation}
+
+* Notes and references
+
+[fn:1] The first footnote. Footnotes land in their own section at the bottom,
+which the stylesheet makes look like MediaWiki's reference list.
+
+[fn:2] The second one, with an [[https://www.mediawiki.org/][external link]] inside
+it.
