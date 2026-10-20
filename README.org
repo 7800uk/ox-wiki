@@ -14,8 +14,8 @@ the Org source and of the LaTeX export, a PDF, and, for a git-tracked file, a
 revision history with MediaWiki-style diffs.
 
 Each page is a single self-contained =.html= file.  The stylesheet, every icon,
-the logo and the footer buttons are inlined, so there is nothing to copy
-alongside.
+the logo, the footer buttons and, for Citizen, the scripts are inlined, so
+there is nothing to copy alongside.
 
 * Using it
 
@@ -24,7 +24,7 @@ With straight.el:
 #+begin_src emacs-lisp
 (use-package ox-wiki
   :straight (ox-wiki :host github :repo "7800uk/ox-wiki"
-                     :files ("*.el" "COPYING" "css" "images"))
+                     :files ("*.el" "COPYING" "css" "js" "images"))
   :after ox)
 #+end_src
 
@@ -158,24 +158,27 @@ rendered before LaTeX is run, so the tab has already been decided.
 | =ox-wiki-skin-vector.el=            | the Vector legacy skin                                        |
 | =ox-wiki-skin-monobook.el=          | the MonoBook skin                                             |
 | =ox-wiki-skin-citizen.el=           | the Citizen skin                                              |
-| =SKINS.org=                         | how to write a third                                          |
+| =SKINS.org=                         | how to write another                                          |
 | =css/org-wiki.css=                  | the only hand-written CSS: Org's markup mapped onto the skins |
 | =css/vector.css=, =css/monobook.css=, =css/citizen.css= | *generated.* The skins' own stylesheets    |
 | =css/mediawiki-extras.css=          | *generated.* MediaWiki's diff and edit-font styles            |
-| =vendor/=                           | those stylesheets and their icons, exactly as served          |
+| =js/mediawiki.js=, =js/citizen-search.js= | the only hand-written scripts: a stand-in for MediaWiki's client runtime, and for Citizen's command palette |
+| =js/citizen.js=                     | *generated.* Citizen's scripts                                |
+| =vendor/=                           | those stylesheets, icons and scripts, exactly as served       |
 | =images/=                           | the default logo and footer badge                             |
 | =tools/build-css.py=                | rebuilds everything in =css/= except =org-wiki.css=              |
+| =tools/build-js.py=                 | rebuilds =js/citizen.js=                                        |
 | =demo/=                             | a crowded page in each skin, and =build.el= to rebuild it       |
 | =COPYING=                           | GPL-2.0, from the Vector repository                           |
 
-Only =*.el=, =css/= and =images/= are needed at run time; =vendor/=, =tools/= and
-=demo/= are build-time only, which is why the straight recipe above ships just
-the three.
+Only =*.el=, =css/=, =js/= and =images/= are needed at run time; =vendor/=,
+=tools/= and =demo/= are build-time only, which is why the straight recipe above
+ships just those.
 
 Nothing generated is checked in.  =demo/= holds only sources, and
 =demo/build.el= writes every page into =build/=, which is ignored.
 
-* Where the stylesheets came from
+* Where the stylesheets and scripts came from
 
 =vendor/*/\*.raw.css= are ResourceLoader builds, fetched from en.wikipedia.org on
 2026-10-19:
@@ -188,7 +191,11 @@ Nothing generated is checked in.  =demo/= holds only sources, and
 does not run, so it was fetched on 2026-10-20 from starcitizen.tools, the wiki
 the skin is written for (Citizen 3.24.0):
 
-: .../load.php?modules=skins.citizen.codex.styles|skins.citizen.icons,styles|skins.citizen.tokens.new&only=styles&skin=citizen
+: .../load.php?modules=mediawiki.action.history.styles|mediawiki.diff.styles|mediawiki.editfont.styles|mediawiki.interface.helpers.styles|mediawiki.notification|mediawiki.page.ready|skins.citizen.codex.styles|skins.citizen.icons,styles|skins.citizen.tokens.new&only=styles&skin=citizen
+
+The core modules in that list are there because Citizen restyles them: the
+notifications and dialogs its scripts open, and the diffs, history and source
+views of the companion pages.
 
 Its icons are the ones that stylesheet asks ResourceLoader for, saved from the
 same wiki as =vendor/citizen/images/NAME.svg=, plus the three Citizen ships in
@@ -198,13 +205,35 @@ inline them, because Citizen points five =@font-face= rules at each file and the
 page would grow by the best part of a megabyte.  Where Roboto is installed it is
 still used; elsewhere the text falls back to the system sans-serif.
 
-Citizen's JavaScript is not ported, so its preferences panel, share dialog,
-sticky header and the scroll-tracking of its contents are absent.  The search
-card, the navigation drawer, the personal menu and the contents work, because
-Citizen builds those from =<details>= elements its stylesheet opens and closes.
-The page follows the reader's light or dark setting, as Citizen does by default;
-=css/org-wiki.css='s syntax-highlighting colours are a light palette, and read
-poorly in the dark theme.
+=vendor/citizen/citizen.raw.js= is Citizen's scripts from the same wiki, with
+the =vue= module they need, again exactly as ResourceLoader serves them:
+
+: .../load.php?modules=skins.citizen.preferences|skins.citizen.scripts|skins.citizen.share|skins.citizen.toc|vue&skin=citizen
+
+That is a run of =mw.loader.impl()= calls, which on a wiki land in the =mw= that
+MediaWiki's startup module defines.  An exported page has no wiki to define it,
+so =js/mediawiki.js= does instead: a small, hand-written stand-in for the client
+runtime — the module loader and =require=, =mw.config=, hooks, messages,
+=mw.util=, =mw.storage=, notifications — covering only what the vendored
+modules call, and fetching nothing.  =tools/build-js.py= copies the modules into
+=js/citizen.js= untouched except for configuration ResourceLoader generates
+from the serving wiki's settings: starcitizen.tools defaults to the dark
+theme, and the build puts back Citizen's own default, which follows the
+reader's system.
+
+With it come Citizen's preferences panel (theme, text size, width, saved in
+the browser), the share dialog, the sticky header, collapsible sections, the
+contents' scroll-tracking, the relative "last modified" time, and the page
+tabs folding into a menu on narrow screens.  The one part that needs a wiki
+behind it, the command palette, searches the wiki's API, so
+=js/citizen-search.js= takes its place: =/= and Ctrl+K open the page's own search
+box, which posts to =org-wiki-search-action=.  Without JavaScript the page still
+works, since Citizen's menus are =<details>= elements its stylesheet opens.
+
+The scripts make a Citizen page about 500 KiB heavier, most of it Vue and the
+preferences panel; =org-wiki-style-method= =link= shares them between pages
+instead.  =css/org-wiki.css='s syntax-highlighting colours are a light
+palette, and read poorly in Citizen's dark theme.
 
 The MediaWiki skins' stylesheets are compiled artefacts rather than the LESS sources in
 [[https://github.com/wikimedia/mediawiki-skins-Vector][mediawiki-skins-Vector]] and
@@ -268,11 +297,12 @@ Everything under =vendor/= except =vendor/citizen/=, and everything the generate
 stylesheets other than =css/citizen.css= are built from, is MediaWiki's:
 copyright the MediaWiki contributors, GPL-2.0-or-later; see [[file:COPYING][COPYING]].
 =ox-wiki.el=, =ox-wiki-pages.el=, the Vector and MonoBook skins,
-=css/org-wiki.css=, =tools/build-css.py= and =images/= are ours and carry the same
-licence.
+=css/org-wiki.css=, =js/mediawiki.js=, the =tools/= and =images/= are ours and carry
+the same licence.  The =vue= module in =js/citizen.js= is MediaWiki's too, around
+Vue.js, which is MIT-licensed.
 
-=vendor/citizen/= and =css/citizen.css= are Citizen's, and =ox-wiki-skin-citizen.el=
-follows its markup: copyright the Citizen contributors, GPL-3.0-or-later; see
+=vendor/citizen/=, =css/citizen.css= and =js/citizen.js= are Citizen's, and
+=ox-wiki-skin-citizen.el= and =js/citizen-search.js= follow its markup and code: copyright the Citizen contributors, GPL-3.0-or-later; see
 [[file:vendor/citizen/LICENSE][vendor/citizen/LICENSE]].  GPL-2.0-or-later code may be combined with GPL-3.0
 code, so the package with Citizen in it is distributed under GPL-3.0; leave out
 those files for a GPL-2.0-only build.

@@ -25,7 +25,7 @@ instead.
 everything from =<body>= to =</body>=.  ox-wiki writes the doctype, the =<head>= and
 the stylesheet elements around it.
 
-Three more keys are optional:
+More keys are optional:
 
 | Key         | What it does                                                    |
 |-------------+-----------------------------------------------------------------|
@@ -33,6 +33,8 @@ Three more keys are optional:
 | =:own-toc=    | non-nil: leave MediaWiki's =#toc= out of the article, and draw the  |
 |             | contents from the page plist's =:toc= instead                     |
 | =:credit=     | a sentence for the footer, saying whose design the skin is      |
+| =:scripts=    | scripts, named like =:stylesheets=, put in =<head>= in order        |
+| =:modules=    | ResourceLoader modules to start once the page is parsed         |
 
 * The page plist
 
@@ -43,6 +45,7 @@ Three more keys are optional:
 | =:subtitle=         | a line under that, as HTML, or nil                        |
 | =:content=          | the body, already wrapped in =div.mw-parser-output=         |
 | =:toc=              | the headings, for an =:own-toc= skin; see below            |
+| =:modified=         | when the Org file last changed, as a Lisp time            |
 | =:namespace-tabs=   | a menu plist: the left-hand tab group                     |
 | =:action-tabs=      | a menu plist: Read, View source, View PDF, View history   |
 | =:personal=         | a menu plist: the personal-tools row                      |
@@ -94,6 +97,26 @@ blanks out the project logo, which ox-wiki fills in per page.
 Read the matching markup off the same wiki, with =?useskin=NAME=, and write
 =:page= to produce it.
 
+* Getting the scripts
+
+A skin's JavaScript is taken the same way, without =only=styles=, which gives
+the modules as a run of =mw.loader.impl()= calls:
+
+#+begin_src sh
+curl 'https://wiki.example/load.php?modules=skins.NAME.scripts|vue&skin=NAME' \
+     -o vendor/NAME/NAME.raw.js
+#+end_src
+
+Ask for every module the skin will load, since nothing is fetched later: the
+ones it loads on demand, and =vue= if any of them is a Vue app.  Add the file to
+=BUILDS= in =tools/build-js.py=, with an override for any =config.json= the wiki
+generated from its own settings, and list the result after =js/mediawiki.js= in
+=:scripts=.  =:modules= names what to start, as a wiki's =RLPAGEMODULES= would.
+
+=js/mediawiki.js= implements the part of =mw= that Citizen's modules use.  A new
+skin may call more; a missing function shows up as an error in the console,
+and belongs in that file.
+
 * What differs between the shipped skins
 
 Worth reading before writing another, because it is the range a skin can cover:
@@ -107,7 +130,9 @@ in MonoBook the namespace tab *is* "read".  Vector wraps every menu label in a
 Citizen goes further.  The sidebar becomes a drawer behind a header button, the
 tabs become icon buttons beside the title, and the table of contents moves out
 of the article into a side column, which is what =:own-toc= is for.  Its menus
-are =<details>= elements, so they open without JavaScript.  It takes its theme
+are =<details>= elements, so they open without JavaScript, and it is the only
+skin with scripts, which expect Org's outline as MediaWiki's =<section>= markup;
+the skin rewrites it on the way out.  It takes its theme
 from classes on =<html>= (=:html-class=), and it hides whichever tab is selected,
 as Citizen does on a real wiki.
 

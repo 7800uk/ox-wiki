@@ -95,7 +95,12 @@ BUILDS = [
         out="css/citizen.css",
         title="the Citizen skin",
         modules="`skins.citizen.styles`, `skins.citizen.codex.styles`,\n"
-        " * `skins.citizen.icons` and `skins.citizen.tokens.new`",
+        " * `skins.citizen.icons` and `skins.citizen.tokens.new`, with the core\n"
+        " * modules Citizen restyles that its scripts and the companion pages\n"
+        " * use: `mediawiki.notification`, `mediawiki.page.ready`,\n"
+        " * `mediawiki.diff.styles`, `mediawiki.editfont.styles`,\n"
+        " * `mediawiki.action.history.styles` and\n"
+        " * `mediawiki.interface.helpers.styles`,",
         site="starcitizen.tools",
         upstream="https://github.com/StarCitizenTools/mediawiki-skins-Citizen",
         copyright="Copyright the Citizen contributors.  GPL-3.0-or-later; see\n"

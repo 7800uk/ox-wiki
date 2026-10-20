@@ -21,8 +21,10 @@
 ;; live in ox-wiki-pages.el.
 ;;
 ;; No stylesheet here is written by hand except css/org-wiki.css.  The skins'
-;; stylesheets are MediaWiki's own, vendored under vendor/ and rebuilt with
-;; their icons inlined by tools/build-css.py.
+;; stylesheets are their own, vendored under vendor/ and rebuilt with their
+;; icons inlined by tools/build-css.py.  A skin's scripts are vendored the same
+;; way, rebuilt by tools/build-js.py, and run on js/mediawiki.js, a small
+;; stand-in for the client runtime a wiki would provide.
 ;;
 ;; Org 9.6 or newer is wanted, which is what Emacs 29 bundles.  It is not
 ;; declared as a package dependency on purpose: naming `org' there makes a
@@ -41,6 +43,7 @@
 (require 'ox-html)
 (require 'cl-lib)
 (require 'subr-x)
+(require 'json)
 
 ;; Loaded on demand by the export commands, so that rendering a page in a
 ;; buffer costs nothing when the companion pages are not wanted.
@@ -48,7 +51,7 @@
 
 (defconst org-wiki-directory
   (file-name-directory (or load-file-name buffer-file-name))
-  "Directory holding this file, its css/ and its images/.")
+  "Directory holding this file, its css/, js/ and images/.")
 
 
 ;;; Options
@@ -225,18 +228,19 @@ or moved as a unit."
   :type '(choice (const :tag "Beside the Org file" nil) directory))
 
 (defcustom org-wiki-style-method 'inline
-  "How the stylesheets reach the exported page.
+  "How the stylesheets, and a skin's scripts, reach the exported page.
 
-`inline' copies them into a <style> element, which makes each page a single
-self-contained file.  `link' emits <link> elements pointing at
-`org-wiki-style-base-url', and you are responsible for putting the css/
-directories there."
+`inline' copies them into <style> and <script> elements, which makes each
+page a single self-contained file.  `link' emits <link> and <script src>
+elements pointing at `org-wiki-style-base-url', and you are responsible for
+putting the css/ and js/ directories there."
   :group 'org-wiki
   :type '(choice (const :tag "Inline in a <style> element" inline)
                  (const :tag "Link to an external copy" link)))
 
 (defcustom org-wiki-style-base-url "ox-wiki/"
-  "URL prefix the stylesheets live under when `org-wiki-style-method' is `link'."
+  "URL prefix the stylesheets and scripts live under.
+Used when `org-wiki-style-method' is `link'."
   :group 'org-wiki
   :type 'string)
 
@@ -254,6 +258,10 @@ PLIST keys:
   :html-class   classes the skin puts on <html>, or nil
   :credit       a sentence crediting where the skin's design came from,
                 for the footer
+  :scripts      scripts the skin needs, named like :stylesheets; they go
+                in <head>, in order
+  :modules      ResourceLoader modules to run once the page is parsed,
+                which :scripts must define
   :own-toc      non-nil if the skin draws the table of contents itself,
                 from the page plist's :toc, rather than having it placed
                 in the article
@@ -586,14 +594,18 @@ the namespace tab itself."
          (or (org-wiki--read-forms (plist-get info :wiki-buttons))
              org-wiki-buttons))))
 
+(defun org-wiki--modified (info)
+  "Return when the file INFO exports was last changed, as a Lisp time."
+  (let ((file (plist-get info :input-file)))
+    (or (and file (file-exists-p file)
+             (file-attribute-modification-time (file-attributes file)))
+        (current-time))))
+
 (defun org-wiki--last-edited (info)
   "Return the \"last edited\" sentence for the footer, from INFO."
-  (let* ((file (plist-get info :input-file))
-         (time (or (and file (file-exists-p file)
-                        (file-attribute-modification-time (file-attributes file)))
-                   (current-time))))
-    (format "This page was last edited on %s."
-            (string-trim (format-time-string "%e %B %Y, at %H:%M (%Z)" time)))))
+  (format "This page was last edited on %s."
+          (string-trim (format-time-string "%e %B %Y, at %H:%M (%Z)"
+                                           (org-wiki--modified info)))))
 
 (defun org-wiki--sidebar (info)
   "Return the sidebar menus for this export.  INFO is the channel."
@@ -632,6 +644,7 @@ returns it, for a skin that draws its own."
                    :name org-wiki-search-field
                    :fields org-wiki-search-fields
                    :sitename (or (plist-get info :wiki-sitename) org-wiki-sitename))
+     :modified (org-wiki--modified info)
      :footer-info (delq nil
                         (list (org-wiki--last-edited info)
                               (and (org-string-nw-p author)
@@ -684,6 +697,34 @@ last word."
        (format "<style>#p-logo a.mw-wiki-logo{background-image:url(\"%s\")}</style>\n"
                src)))))
 
+(defun org-wiki--script-element (page)
+  "Return the <script> elements carrying the skin's scripts for PAGE, if any.
+Scripts are inlined or linked as `org-wiki-style-method' says, like the
+stylesheets, and are followed by a call to start the skin's :modules."
+  (let* ((skin (org-wiki--skin (plist-get page :skin)))
+         (modules (plist-get skin :modules)))
+    (concat
+     (mapconcat
+      (lambda (name)
+        (let ((file (expand-file-name name org-wiki-directory)))
+          (pcase org-wiki-style-method
+            ('link (format "<script src=\"%s%s\"></script>\n"
+                           (org-wiki--esc org-wiki-style-base-url)
+                           (org-wiki--esc name)))
+            (_ (if (not (file-readable-p file))
+                   (format "<!-- ox-wiki: missing script %s -->\n" (org-wiki--esc name))
+                 (concat "<script>\n"
+                         ;; Inline, the text must not close its own element.
+                         (replace-regexp-in-string
+                          "</\\(script\\)" "<\\\\/\\1"
+                          (with-temp-buffer (insert-file-contents file)
+                                            (buffer-string))
+                          t)
+                         "\n</script>\n"))))))
+      (plist-get skin :scripts) "")
+     (when modules
+       (format "<script>mw.loader.load(%s);</script>\n" (json-encode modules))))))
+
 (defun org-wiki--document (page)
   "Render PAGE as a complete HTML document."
   (let ((skin (org-wiki--skin (plist-get page :skin))))
@@ -698,6 +739,7 @@ last word."
          (format "<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<title>%s</title>\n"
                  (org-wiki--esc (org-wiki--untag (plist-get page :title)))))
      (org-wiki--style-element page)
+     (org-wiki--script-element page)
      "</head>\n"
      (funcall (plist-get skin :page) page)
      "</html>\n")))
