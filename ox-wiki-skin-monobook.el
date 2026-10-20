@@ -127,6 +127,9 @@
   :title "MonoBook"
   :stylesheets '("css/monobook.css")
   :body-class "skin-monobook"
+  :credit (concat "Presentation adapted from MediaWiki's skins, which are"
+                 " copyright the MediaWiki contributors and licensed"
+                 " GPL-2.0-or-later.")
   :page #'org-wiki-monobook-page)
 
 (provide 'ox-wiki-skin-monobook)

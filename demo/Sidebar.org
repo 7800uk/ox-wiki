@@ -17,6 +17,7 @@ like this one are fine.
 * Skins
 - [[file:Demo.html][Vector legacy]]
 - [[file:Demo-monobook.html][MonoBook]]
+- [[file:Demo-citizen.html][Citizen]]
 
 * Tools
 - [[javascript:print();][Printable version]]

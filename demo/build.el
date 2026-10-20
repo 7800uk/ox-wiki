@@ -8,10 +8,10 @@
 ;; Org sources, and never in version control -- so a demo build leaves the
 ;; working tree as it found it.  Open build/Demo.html to look at the result.
 ;;
-;; Writes Demo.html and its companion pages in the Vector skin, and
-;; Demo-monobook.html in MonoBook.  The PDF needs a LaTeX installation and the
-;; revision history needs the file to be committed; both are skipped, with a
-;; message, when they cannot be produced.
+;; Writes Demo.html and its companion pages in the Vector skin,
+;; Demo-monobook.html in MonoBook and Demo-citizen.html in Citizen.  The PDF
+;; needs a LaTeX installation and the revision history needs the file to be
+;; committed; both are skipped, with a message, when they cannot be produced.
 
 ;;; Code:
 
@@ -20,7 +20,7 @@
   (add-to-list 'load-path root)
   (require 'ox-wiki)
   (let ((org-wiki-output-directory (expand-file-name "build" root)))
-    (dolist (name '("Demo.org" "Demo-monobook.org"))
+    (dolist (name '("Demo.org" "Demo-monobook.org" "Demo-citizen.org"))
       (with-current-buffer (find-file-noselect (expand-file-name name here))
         (message "ox-wiki: wrote %s" (org-wiki-export-to-html))))))
 

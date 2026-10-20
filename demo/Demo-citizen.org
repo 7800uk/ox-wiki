@@ -1,0 +1,22 @@
+#+TITLE: Dundee
+#+AUTHOR: Jacob Walchuk
+#+LANGUAGE: en
+#+OPTIONS: toc:3 H:4 ^:nil
+
+# The same page in another skin, to show that the skin is a parameter and not
+# a fork.  Everything below the keywords is included from Demo.org, so the two
+# pages differ only in #+WIKI_SKIN.
+
+#+WIKI_SKIN: citizen
+#+WIKI_SITENAME: Demopedia
+#+WIKI_TAGLINE: From Demopedia, the Org-mode encyclopedia
+#+WIKI_TYPE: Article
+#+WIKI_LOGO: logo.svg
+#+WIKI_HOME: Demo-citizen.html
+#+WIKI_SIDEBAR: Sidebar.org
+#+WIKI_BUTTONS: ("images/poweredby_org.svg" "https://orgmode.org/" "Powered by Org mode")
+#+WIKI_BUTTONS: ("cc-by-sa.svg" "https://creativecommons.org/licenses/by-sa/4.0/" "CC BY-SA 4.0")
+#+WIKI_LATEX: nil
+#+WIKI_GIT: nil
+
+#+INCLUDE: "Demo.org" :lines "16-"

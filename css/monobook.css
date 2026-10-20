@@ -5,7 +5,8 @@
  * vendor/monobook/monobook.raw.css, which is the ResourceLoader build of `mediawiki.skins.legacy` and `skins.monobook.styles`
  * exactly as en.wikipedia.org serves it.  The build changes only the url()
  * references: icons are inlined as data: URIs from the vendor/images/ beside
- * the source, and the project logo is left blank for ox-wiki.el to fill in.
+ * the source, web fonts are dropped, and the project logo is left blank for
+ * ox-wiki.el to fill in.
  *
  * Upstream: https://github.com/wikimedia/mediawiki-skins-MonoBook
  * Copyright the MediaWiki contributors.  GPL-2.0-or-later; see COPYING.

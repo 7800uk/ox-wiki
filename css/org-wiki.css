@@ -302,6 +302,16 @@
 	cursor: default;
 }
 
+/* A sidebar item with nothing to link to.  MediaWiki always has a link there,
+   so Citizen pads the <a> and nothing else; line plain text up with it. */
+.citizen-menu .mw-list-item > span:only-child {
+	align-items: center;
+	color: var( --color-subtle, #54595d );
+	display: flex;
+	min-height: 2.25rem;
+	padding-inline: var( --space-md, 16px );
+}
+
 /* MediaWiki hides the tagline by default and Wikipedia switches it back on in
    its own site styles.  ox-vector.el deliberately puts something there, so do
    the same. */
@@ -314,7 +324,8 @@
    MediaWiki serves the textarea's font from `mediawiki.editfont.styles', which
    is vendored, but the form around it and the button under it come from Codex
    and from the edit-action module, which are not.  These few rules stand in for
-   them. */
+   them.  Citizen vendors Codex's button along with the skin, so the button
+   rules leave it alone. */
 
 .mw-editform {
 	margin-top: 0.8em;
@@ -337,7 +348,7 @@
 	padding: 1em 1em 1.5em;
 }
 
-.cdx-button {
+body:not( .skin-citizen ) .cdx-button {
 	background-color: var( --background-color-interactive-subtle, #f8f9fa );
 	border: 1px solid var( --border-color-base, #a2a9b1 );
 	border-radius: 2px;
@@ -352,13 +363,13 @@
 	text-decoration: none;
 }
 
-.cdx-button--weight-primary.cdx-button--action-progressive {
+body:not( .skin-citizen ) .cdx-button--weight-primary.cdx-button--action-progressive {
 	background-color: #36c;
 	border-color: #36c;
 	color: #fff;
 }
 
-.cdx-button--weight-primary.cdx-button--action-progressive:hover {
+body:not( .skin-citizen ) .cdx-button--weight-primary.cdx-button--action-progressive:hover {
 	background-color: #447ff5;
 	border-color: #447ff5;
 	color: #fff;

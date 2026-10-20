@@ -171,6 +171,9 @@ Vector's checkbox dropdowns."
   :title "Vector legacy"
   :stylesheets '("css/vector.css")
   :body-class "skin-vector-legacy skin-vector"
+  :credit (concat "Presentation adapted from MediaWiki's skins, which are"
+                 " copyright the MediaWiki contributors and licensed"
+                 " GPL-2.0-or-later.")
   :page #'org-wiki-vector-page)
 
 (provide 'ox-wiki-skin-vector)

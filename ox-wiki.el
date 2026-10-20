@@ -11,9 +11,9 @@
 
 ;; An Org export backend derived from `html' that emits the page skeleton of a
 ;; MediaWiki skin, so an exported Org file reads as a wiki article: content
-;; column, tab row, sidebar, wiki footer.  Two skins ship with it, `vector'
-;; (Vector legacy, the 2010 Vector) and `monobook'; see skins/README for how to
-;; add another.
+;; column, tab row, sidebar, wiki footer.  Three skins ship with it, `vector'
+;; (Vector legacy, the 2010 Vector), `monobook' and `citizen'; see SKINS.org
+;; for how to add another.
 ;;
 ;; Beside the article it can write the pages the tabs point at: a read-only
 ;; source view of the Org text and of the LaTeX export, a PDF, and, when the
@@ -150,10 +150,9 @@ Same shape as what `org-wiki--read-sidebar' returns: a list of menu plists."
   :group 'org-wiki
   :type '(repeat plist))
 
-(defcustom org-wiki-footer-notice
-  "Generated from Org mode.  Presentation adapted from MediaWiki's skins, \
-which are copyright the MediaWiki contributors and licensed GPL-2.0-or-later."
-  "Attribution line in the footer."
+(defcustom org-wiki-footer-notice "Generated from Org mode."
+  "Attribution line in the footer.
+The skin's own credit, its `:credit', follows it on the same line."
   :group 'org-wiki
   :type 'string)
 
@@ -252,6 +251,12 @@ PLIST keys:
   :title        human-readable name
   :stylesheets  stylesheets the skin needs, named relative to the package
   :body-class   classes MediaWiki puts on <body> for this skin
+  :html-class   classes the skin puts on <html>, or nil
+  :credit       a sentence crediting where the skin's design came from,
+                for the footer
+  :own-toc      non-nil if the skin draws the table of contents itself,
+                from the page plist's :toc, rather than having it placed
+                in the article
   :page         function of one argument, the page plist built by
                 `org-wiki--page', returning everything from <body> to
                 </body>.
@@ -262,6 +267,11 @@ See ox-wiki-skin-vector.el for a worked example, and SKINS.org for the rest.")
   "Register the skin NAME, described by PLIST.  See `org-wiki-skins'."
   (setf (alist-get name org-wiki-skins) plist)
   name)
+
+(defun org-wiki--skin-name (info)
+  "Return the name of the skin INFO, the export channel, asks for."
+  (let ((s (plist-get info :wiki-skin)))
+    (if (stringp s) (intern (string-trim s)) (or s org-wiki-skin))))
 
 (defun org-wiki--skin (name)
   "Return the definition of skin NAME, loading it if need be.
@@ -593,17 +603,17 @@ the namespace tab itself."
         org-wiki-default-sidebar)))
 
 (cl-defun org-wiki--page (info &key title content namespace-tabs action-tabs
-                               (action "view") subtitle)
+                               (action "view") subtitle toc)
   "Build the page plist a skin renders.  INFO is the export channel.
 TITLE and CONTENT are HTML.  NAMESPACE-TABS and ACTION-TABS are menu
 plists.  ACTION becomes MediaWiki's body class, and SUBTITLE the line
-under the title."
+under the title.  TOC is the table of contents as `org-wiki--toc-entries'
+returns it, for a skin that draws its own."
   (let* ((file (plist-get info :input-file))
          (slug (org-wiki--slug (if file (file-name-base file) (or title "page"))))
          (author (org-wiki--plain (plist-get info :author) info)))
     (list
-     :skin (let ((s (plist-get info :wiki-skin)))
-             (if (stringp s) (intern (string-trim s)) (or s org-wiki-skin)))
+     :skin (org-wiki--skin-name info)
      :lang (or (plist-get info :language) "en")
      :slug slug
      :action action
@@ -611,6 +621,7 @@ under the title."
      :tagline (or (plist-get info :wiki-tagline) org-wiki-tagline)
      :subtitle subtitle
      :content content
+     :toc toc
      :namespace-tabs (or namespace-tabs (org-wiki--namespace-tabs info))
      :action-tabs (or action-tabs (org-wiki-action-tabs info 'read))
      :personal org-wiki-personal-tools
@@ -625,7 +636,14 @@ under the title."
                         (list (org-wiki--last-edited info)
                               (and (org-string-nw-p author)
                                    (format "Written by %s." author))
-                              (org-wiki--esc org-wiki-footer-notice)))
+                              (org-wiki--esc
+                               (string-join
+                                (delq nil
+                                      (list org-wiki-footer-notice
+                                            (plist-get (org-wiki--skin
+                                                        (org-wiki--skin-name info))
+                                                       :credit)))
+                                "  "))))
      :footer-places org-wiki-footer-places
      :footer-buttons (org-wiki--buttons info)
      :head (plist-get info :wiki-head))))
@@ -671,7 +689,9 @@ last word."
   (let ((skin (org-wiki--skin (plist-get page :skin))))
     (concat
      "<!DOCTYPE html>\n"
-     (format "<html class=\"client-nojs\" lang=\"%s\" dir=\"ltr\">\n"
+     (format "<html class=\"client-nojs%s\" lang=\"%s\" dir=\"ltr\">\n"
+             (let ((class (plist-get skin :html-class)))
+               (if class (concat " " class) ""))
              (plist-get page :lang))
      "<head>\n"
      (or (plist-get page :head)
@@ -693,16 +713,10 @@ last word."
 
 ;;; Table of contents
 
-(defun org-wiki--toc-entry (headline info numbers)
-  "Render the TOC link for HEADLINE.  INFO is the channel.
-NUMBERS is the section number, as a list of integers."
-  (let* ((id (org-html--reference headline info))
-         (text (org-export-data-with-backend
-                (org-export-get-alt-title headline info)
-                (org-export-toc-entry-backend 'wiki)
-                info)))
-    (format "<a href=\"#%s\"><span class=\"tocnumber\">%s</span> <span class=\"toctext\">%s</span></a>"
-            id (mapconcat #'number-to-string numbers ".") text)))
+(defun org-wiki--toc-entry (entry)
+  "Render the TOC link for ENTRY, one of `org-wiki--toc-entries'."
+  (format "<a href=\"#%s\"><span class=\"tocnumber\">%s</span> <span class=\"toctext\">%s</span></a>"
+          (plist-get entry :id) (plist-get entry :number) (plist-get entry :text)))
 
 (defun org-wiki--toc-list (entries)
   "Build the nested <ul> of ENTRIES, a list of (LEVEL SECTION HTML)."
@@ -724,28 +738,42 @@ NUMBERS is the section number, as a list of integers."
       entries "\n")
      (org-html--make-string (- prev-level start-level) "</li>\n</ul>\n"))))
 
-(defun org-wiki-toc (depth info)
-  "Return the table of contents down to DEPTH, in MediaWiki's markup.
-INFO is the export communication channel."
+(defun org-wiki--toc-entries (depth info)
+  "Return the headings down to DEPTH, as the table of contents lists them.
+INFO is the export communication channel.  Each entry is a plist:
+:level, :section (its position in the list, from 1), :number (\"2.1\"),
+:id (the heading's anchor) and :text (its title, as HTML)."
   ;; MediaWiki numbers its contents whether or not the headings themselves are
   ;; numbered, so the numbering is counted here rather than read from
   ;; `:headline-numbering', which is empty under #+OPTIONS: num:nil.
-  (let* ((section 0)
-         (counters (make-vector (1+ org-export-max-depth) 0))
-         (entries
-          (mapcar
-           (lambda (headline)
-             (let ((level (org-export-get-relative-level headline info)))
-               (setq section (1+ section))
-               (cl-incf (aref counters (1- level)))
-               (cl-loop for i from level to org-export-max-depth
-                        do (aset counters i 0))
-               (list level section
-                     (org-wiki--toc-entry
-                      headline info
-                      (cl-loop for i from 0 below level
-                               collect (aref counters i))))))
-           (org-export-collect-headlines info depth))))
+  (let ((section 0)
+        (counters (make-vector (1+ org-export-max-depth) 0)))
+    (mapcar
+     (lambda (headline)
+       (let ((level (org-export-get-relative-level headline info)))
+         (setq section (1+ section))
+         (cl-incf (aref counters (1- level)))
+         (cl-loop for i from level to org-export-max-depth
+                  do (aset counters i 0))
+         (list :level level :section section
+               :number (mapconcat #'number-to-string
+                                  (cl-loop for i from 0 below level
+                                           collect (aref counters i))
+                                  ".")
+               :id (org-html--reference headline info)
+               :text (org-export-data-with-backend
+                      (org-export-get-alt-title headline info)
+                      (org-export-toc-entry-backend 'wiki)
+                      info))))
+     (org-export-collect-headlines info depth))))
+
+(defun org-wiki-toc (depth info)
+  "Return the table of contents down to DEPTH, in MediaWiki's markup.
+INFO is the export communication channel."
+  (let ((entries (mapcar (lambda (e)
+                           (list (plist-get e :level) (plist-get e :section)
+                                 (org-wiki--toc-entry e)))
+                         (org-wiki--toc-entries depth info))))
     (when entries
       (concat
        "<div id=\"toc\" class=\"toc\" role=\"navigation\" aria-labelledby=\"mw-toc-heading\">\n"
@@ -787,8 +815,12 @@ depth -- the TOC goes at the top."
    (t (concat toc contents))))
 
 (defun org-wiki-inner-template (contents info)
-  "Wrap CONTENTS in the parser-output div, with the TOC.  INFO is the channel."
-  (let ((depth (plist-get info :with-toc)))
+  "Wrap CONTENTS in the parser-output div, with the TOC.  INFO is the channel.
+A skin that draws its own TOC gets none here; `org-wiki-template' hands it
+the entries instead."
+  (let ((depth (and (not (plist-get (org-wiki--skin (org-wiki--skin-name info))
+                                    :own-toc))
+                    (plist-get info :with-toc))))
     (concat
      "<div class=\"mw-parser-output\">\n"
      (org-wiki--place-toc contents (and depth (org-wiki-toc depth info)))
@@ -797,7 +829,8 @@ depth -- the TOC goes at the top."
 
 (defun org-wiki-template (contents info)
   "Return the whole document.  CONTENTS is the body; INFO is the channel."
-  (let ((title (org-export-data (plist-get info :title) info)))
+  (let ((title (org-export-data (plist-get info :title) info))
+        (depth (plist-get info :with-toc)))
     (org-wiki--document
      (org-wiki--page
       (org-combine-plists
@@ -806,7 +839,8 @@ depth -- the TOC goes at the top."
                                 (org-html--build-head info)
                                 (org-html--build-mathjax-config info))))
       :title (if (org-string-nw-p title) title "Untitled")
-      :content contents))))
+      :content contents
+      :toc (and depth (org-wiki--toc-entries depth info))))))
 
 (defun org-wiki-filter-table (output _backend _info)
   "Give the table in OUTPUT MediaWiki's `wikitable' class.
