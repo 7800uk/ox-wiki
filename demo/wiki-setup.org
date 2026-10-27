@@ -1,0 +1,7 @@
+# Settings every demo page shares, pulled in with #+SETUPFILE.  Search and
+# the login menu are off unless a page or a setup file like this one asks.
+
+#+WIKI_SEARCH_BOX: t
+#+WIKI_SEARCH: https://duckduckgo.com/
+#+WIKI_LOGIN: t
+#+WIKI_LOGIN_URL: https://orgmode.org/

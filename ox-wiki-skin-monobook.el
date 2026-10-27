@@ -110,14 +110,16 @@
       (list :id "cactions" :label "Page actions"
             :links (append (plist-get (plist-get page :namespace-tabs) :links)
                            (plist-get (plist-get page :action-tabs) :links))))
-     (org-wiki-monobook--portlet (plist-get page :personal))
+     (if (plist-get page :personal)
+         (org-wiki-monobook--portlet (plist-get page :personal))
+       "")
      "<div class=\"portlet\" id=\"p-logo\" role=\"banner\">\n"
      (format "\t<a href=\"%s\" class=\"mw-wiki-logo\" title=\"Visit the main page\"></a>\n"
              (org-wiki--esc (plist-get logo :href)))
      "</div>\n"
      "<div id=\"sidebar\">\n"
      (mapconcat #'org-wiki-monobook--portlet (plist-get page :sidebar) "")
-     (org-wiki-monobook--search (plist-get page :search))
+     (if (plist-get page :search) (org-wiki-monobook--search (plist-get page :search)) "")
      "</div>\n</div>\n"
      "<div class=\"visualClear\"></div>\n"
      (org-wiki-monobook--footer page)

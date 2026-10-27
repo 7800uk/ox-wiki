@@ -140,21 +140,25 @@ Vector's checkbox dropdowns."
      "\t\t<div id=\"contentSub2\"></div>\n"
      "\t\t<div id=\"jump-to-nav\"></div>\n"
      "\t\t<a class=\"mw-jump-link\" href=\"#mw-head\">Jump to navigation</a>\n"
-     "\t\t<a class=\"mw-jump-link\" href=\"#searchInput\">Jump to search</a>\n"
+     (if (plist-get page :search)
+         "\t\t<a class=\"mw-jump-link\" href=\"#searchInput\">Jump to search</a>\n"
+       "")
      (format "\t\t<div id=\"mw-content-text\" class=\"mw-body-content mw-content-ltr\" lang=\"%s\" dir=\"ltr\">\n"
              lang)
      (plist-get page :content)
      "\t\t</div>\n\t</div>\n</div>\n"
      "<div id=\"mw-navigation\">\n<h2>Navigation menu</h2>\n"
      "<div id=\"mw-head\">\n"
-     (org-wiki-vector--portlet
-      (org-combine-plists (plist-get page :personal)
-                          '(:class "vector-user-menu-legacy")))
+     (if (plist-get page :personal)
+         (org-wiki-vector--portlet
+          (org-combine-plists (plist-get page :personal)
+                              '(:class "vector-user-menu-legacy")))
+       "")
      "<div id=\"left-navigation\">\n"
      (org-wiki-vector--tabs (plist-get page :namespace-tabs))
      "</div>\n<div id=\"right-navigation\">\n"
      (org-wiki-vector--tabs (plist-get page :action-tabs))
-     (org-wiki-vector--search (plist-get page :search))
+     (if (plist-get page :search) (org-wiki-vector--search (plist-get page :search)) "")
      "</div>\n</div>\n"
      "<div id=\"mw-panel\" class=\"vector-legacy-sidebar\">\n"
      "<div id=\"p-logo\" role=\"banner\">\n"

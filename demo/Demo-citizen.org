@@ -14,9 +14,10 @@
 #+WIKI_LOGO: logo.svg
 #+WIKI_HOME: Demo-citizen.html
 #+WIKI_SIDEBAR: Sidebar.org
+#+SETUPFILE: wiki-setup.org
 #+WIKI_BUTTONS: ("images/poweredby_org.svg" "https://orgmode.org/" "Powered by Org mode")
 #+WIKI_BUTTONS: ("cc-by-sa.svg" "https://creativecommons.org/licenses/by-sa/4.0/" "CC BY-SA 4.0")
 #+WIKI_LATEX: nil
 #+WIKI_GIT: nil
 
-#+INCLUDE: "Demo.org" :lines "16-"
+#+INCLUDE: "Demo.org" :lines "17-"

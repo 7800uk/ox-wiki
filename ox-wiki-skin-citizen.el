@@ -23,8 +23,8 @@
 ;; Beyond Vector and MonoBook, it draws the table of contents itself, in the
 ;; side column, so it asks for `:own-toc' and builds the list from the page
 ;; plist's `:toc'; it themes from classes on <html>, starting from
-;; `skin-theme-clientpref-os' so the page follows the reader's light or dark
-;; setting until they pick one; and it reshapes Org's outline into the
+;; `skin-theme-clientpref-black', Citizen's untinted dark theme, until the
+;; reader picks another; and it reshapes Org's outline into the
 ;; <section> markup Citizen collapses, the way Citizen's own PHP does for a
 ;; wiki's parser output.
 ;;
@@ -209,7 +209,7 @@ js/citizen-search.js."
 (defun org-wiki-citizen--drawer (page)
   "Render the drawer, Citizen's home for the sidebar, from PAGE."
   (let ((logo (plist-get page :logo))
-        (site (org-wiki--esc (plist-get (plist-get page :search) :sitename))))
+        (site (org-wiki--esc (plist-get page :sitename))))
     (org-wiki-citizen--dropdown
      :class "citizen-drawer citizen-header__item"
      :title "Toggle menu" :icon org-wiki-citizen--menu-svg
@@ -289,13 +289,13 @@ Until it does, the card shows Citizen's loading skeleton."
              (org-wiki-citizen--logo-img logo 32)
              (org-wiki-citizen--icon "home"))
      "</div>\n"
-     (org-wiki-citizen--search (plist-get page :search))
+     (if (plist-get page :search) (org-wiki-citizen--search (plist-get page :search)) "")
      (org-wiki-citizen--drawer page)
      "<div class=\"citizen-header__inner\">\n"
      "\t<div class=\"citizen-header__start\"></div>\n"
      "\t<div class=\"citizen-header__end\">\n"
      (org-wiki-citizen--preferences)
-     (org-wiki-citizen--user-menu page)
+     (if (plist-get page :personal) (org-wiki-citizen--user-menu page) "")
      "\t</div>\n"
      "</div>\n"
      "</header>\n")))
@@ -523,7 +523,7 @@ the latest diff; Citizen's script rewrites the date as \"3 days ago\"."
      "\t\t<div class=\"citizen-footer__siteinfo\">\n"
      (format "\t\t\t<div id=\"footer-sitetitle\" class=\"citizen-footer__sitetitle mw-wiki-title\">%s<div class=\"mw-logo-wordmark\">%s</div></div>\n"
              (org-wiki-citizen--logo-img logo 48 t)
-             (org-wiki--esc (plist-get (plist-get page :search) :sitename)))
+             (org-wiki--esc (plist-get page :sitename)))
      (format "\t\t\t<p id=\"footer-desc\" class=\"citizen-footer__desc\">%s</p>\n"
              (org-wiki--esc (plist-get page :tagline)))
      "\t\t</div>\n"
@@ -624,7 +624,7 @@ Follows templates/StickyHeader.mustache."
   :scripts '("js/mediawiki.js" "js/citizen.js" "js/citizen-search.js")
   :modules '("skins.citizen.scripts")
   :body-class "skin-citizen"
-  :html-class (concat "skin-theme-clientpref-os citizen-v4"
+  :html-class (concat "skin-theme-clientpref-black citizen-v4"
                       " citizen-header-position-left citizen-header-position-mobile-bottom"
                       " citizen-feature-autohide-navigation-clientpref-1"
                       " citizen-feature-image-dimming-clientpref-0"

@@ -48,10 +48,11 @@ More keys are optional:
 | =:modified=         | when the Org file last changed, as a Lisp time            |
 | =:namespace-tabs=   | a menu plist: the left-hand tab group                     |
 | =:action-tabs=      | a menu plist: Read, View source, View PDF, View history   |
-| =:personal=         | a menu plist: the personal-tools row                      |
+| =:personal=         | a menu plist: the personal-tools row, or nil to draw none  |
 | =:sidebar=          | a list of menu plists                                     |
 | =:logo=             | =(:href URL :src DATA-URI)=                                 |
-| =:search=           | =(:action URL :name FIELD :fields ALIST :sitename NAME)=    |
+| =:search=           | =(:action URL :name FIELD :fields ALIST :sitename NAME)=, or nil to draw no search box |
+| =:sitename=         | the wiki's name, as plain text, whether or not there is a search box |
 | =:footer-info=      | a list of HTML strings                                    |
 | =:footer-places=    | a list of link plists                                     |
 | =:footer-buttons=   | a list of =(:src :href :alt)=                               |

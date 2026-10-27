@@ -138,10 +138,24 @@ Same shape as what `org-wiki--read-sidebar' returns: a list of menu plists."
   :group 'org-wiki
   :type '(repeat plist))
 
+(defcustom org-wiki-login nil
+  "Whether to show the personal-tools menu, with its \"Log in\" link.
+Off by default: an exported page has nobody to log in.  Per file:
+#+WIKI_LOGIN, which is most at home in a #+SETUPFILE shared by the wiki."
+  :group 'org-wiki
+  :type 'boolean)
+
+(defcustom org-wiki-login-url "#"
+  "Where the \"Log in\" link points.  Per file: #+WIKI_LOGIN_URL."
+  :group 'org-wiki
+  :type 'string)
+
 (defcustom org-wiki-personal-tools
   '(:id "personal" :label "Personal tools"
     :links ((:text "Not logged in" :href "#" :id "pt-anonuserpage")))
-  "The personal-tools menu, at the top right."
+  "The personal-tools menu, at the top right.
+A \"Log in\" link to `org-wiki-login-url' is added after these links.
+Shown only when `org-wiki-login' is on."
   :group 'org-wiki
   :type 'plist)
 
@@ -158,6 +172,13 @@ Same shape as what `org-wiki--read-sidebar' returns: a list of menu plists."
 The skin's own credit, its `:credit', follows it on the same line."
   :group 'org-wiki
   :type 'string)
+
+(defcustom org-wiki-search nil
+  "Whether to show the search box.
+Off by default, like `org-wiki-login'.  Per file: #+WIKI_SEARCH_BOX, with
+#+WIKI_SEARCH saying where the box posts."
+  :group 'org-wiki
+  :type 'boolean)
 
 (defcustom org-wiki-search-action "https://duckduckgo.com/"
   "Form action of the search box.
@@ -623,7 +644,8 @@ under the title.  TOC is the table of contents as `org-wiki--toc-entries'
 returns it, for a skin that draws its own."
   (let* ((file (plist-get info :input-file))
          (slug (org-wiki--slug (if file (file-name-base file) (or title "page"))))
-         (author (org-wiki--plain (plist-get info :author) info)))
+         (author (org-wiki--plain (plist-get info :author) info))
+         (sitename (or (plist-get info :wiki-sitename) org-wiki-sitename)))
     (list
      :skin (org-wiki--skin-name info)
      :lang (or (plist-get info :language) "en")
@@ -636,14 +658,24 @@ returns it, for a skin that draws its own."
      :toc toc
      :namespace-tabs (or namespace-tabs (org-wiki--namespace-tabs info))
      :action-tabs (or action-tabs (org-wiki-action-tabs info 'read))
-     :personal org-wiki-personal-tools
+     :sitename sitename
+     :personal (and (org-wiki--flag (plist-get info :wiki-login))
+                    (org-combine-plists
+                     org-wiki-personal-tools
+                     (list :links
+                           (append (plist-get org-wiki-personal-tools :links)
+                                   (list (list :text "Log in" :id "pt-login"
+                                               :accesskey "o"
+                                               :href (or (plist-get info :wiki-login-url)
+                                                         org-wiki-login-url)))))))
      :sidebar (org-wiki--sidebar info)
      :logo (org-wiki--logo info)
-     :search (list :action (or (plist-get info :wiki-search-action)
-                               org-wiki-search-action)
-                   :name org-wiki-search-field
-                   :fields org-wiki-search-fields
-                   :sitename (or (plist-get info :wiki-sitename) org-wiki-sitename))
+     :search (and (org-wiki--flag (plist-get info :wiki-search))
+                  (list :action (or (plist-get info :wiki-search-action)
+                                    org-wiki-search-action)
+                        :name org-wiki-search-field
+                        :fields org-wiki-search-fields
+                        :sitename sitename))
      :modified (org-wiki--modified info)
      :footer-info (delq nil
                         (list (org-wiki--last-edited info)
@@ -933,7 +965,10 @@ none of its own from an #+ATTR_HTML line."
     (:wiki-logo-href "WIKI_HOME" nil org-wiki-logo-href t)
     (:wiki-buttons "WIKI_BUTTONS" nil org-wiki-buttons space)
     (:wiki-sidebar "WIKI_SIDEBAR" nil org-wiki-sidebar t)
+    (:wiki-search "WIKI_SEARCH_BOX" nil org-wiki-search t)
     (:wiki-search-action "WIKI_SEARCH" nil org-wiki-search-action t)
+    (:wiki-login "WIKI_LOGIN" nil org-wiki-login t)
+    (:wiki-login-url "WIKI_LOGIN_URL" nil org-wiki-login-url t)
     (:wiki-latex "WIKI_LATEX" nil org-wiki-latex t)
     (:wiki-pdf "WIKI_PDF" nil org-wiki-pdf t)
     (:wiki-git "WIKI_GIT" nil org-wiki-git t)))

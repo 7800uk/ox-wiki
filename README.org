@@ -68,7 +68,10 @@ page overrides it only where it differs.
 | =#+WIKI_HOME=       | where the logo points                                    |
 | =#+WIKI_SIDEBAR=    | an Org file describing the sidebar                       |
 | =#+WIKI_BUTTONS=    | a footer button; repeat the line for more                |
+| =#+WIKI_SEARCH_BOX= | t shows the search box; off by default                   |
 | =#+WIKI_SEARCH=     | where the search box posts                               |
+| =#+WIKI_LOGIN=      | t shows the personal menu and "Log in"; off by default   |
+| =#+WIKI_LOGIN_URL=  | where "Log in" points                                    |
 | =#+WIKI_LATEX=      | nil drops the LaTeX source and the PDF                   |
 | =#+WIKI_PDF=        | nil keeps the LaTeX source but drops the PDF             |
 | =#+WIKI_GIT=        | nil drops the revision history                           |
@@ -119,6 +122,30 @@ The path is resolved against the exported file's directory.  Without the
 keyword, =org-wiki-default-sidebar= is used.  Note that MediaWiki hides the first
 portlet's heading — the one right under the logo — which is why "Navigation"
 does not appear above its links.  That is the skin, not a bug.
+
+** Search and logging in
+
+Neither is drawn unless asked for: an exported page has no wiki to search and
+nobody to log in.  Both are wiki-wide choices, so they sit best in a setup file
+the pages share:
+
+#+begin_example
+,#+WIKI_SEARCH_BOX: t
+,#+WIKI_SEARCH: https://duckduckgo.com/
+,#+WIKI_LOGIN: t
+,#+WIKI_LOGIN_URL: https://wiki.example.org/login
+#+end_example
+
+and in each page:
+
+#+begin_example
+,#+SETUPFILE: wiki-setup.org
+#+end_example
+
+The search box is a plain GET form posting its text as =q=
+(=org-wiki-search-field=) to =#+WIKI_SEARCH=, so any endpoint that takes a query
+that way will do.  The login link goes after the links in
+=org-wiki-personal-tools=, "Not logged in" by default.
 
 * The pages the tabs lead to
 
