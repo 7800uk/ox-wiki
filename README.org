@@ -72,6 +72,10 @@ page overrides it only where it differs.
 | =#+WIKI_SEARCH=     | where the search box posts                               |
 | =#+WIKI_LOGIN=      | t shows the personal menu and "Log in"; off by default   |
 | =#+WIKI_LOGIN_URL=  | where "Log in" points                                    |
+| =#+WIKI_PERSONAL=   | a link before "Log in", as =(TEXT HREF)=; nil for none     |
+| =#+WIKI_FOOTER_PLACES= | a footer link, as =(TEXT HREF)=; nil for none          |
+| =#+WIKI_FOOTER_NOTICE= | the footer's attribution line; empty for none         |
+| =#+WIKI_CREDIT=     | nil drops the skin's credit from the footer              |
 | =#+WIKI_LATEX=      | nil drops the LaTeX source and the PDF                   |
 | =#+WIKI_PDF=        | nil keeps the LaTeX source but drops the PDF             |
 | =#+WIKI_GIT=        | nil drops the revision history                           |

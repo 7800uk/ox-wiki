@@ -155,7 +155,10 @@ Off by default: an exported page has nobody to log in.  Per file:
     :links ((:text "Not logged in" :href "#" :id "pt-anonuserpage")))
   "The personal-tools menu, at the top right.
 A \"Log in\" link to `org-wiki-login-url' is added after these links.
-Shown only when `org-wiki-login' is on."
+Shown only when `org-wiki-login' is on.  Per file, the links can be given
+one per line as (TEXT HREF), or as a lone nil for none but \"Log in\":
+
+  #+WIKI_PERSONAL: nil"
   :group 'org-wiki
   :type 'plist)
 
@@ -163,15 +166,26 @@ Shown only when `org-wiki-login' is on."
   '((:text "Privacy policy" :href "#" :id "footer-places-privacy")
     (:text "About" :href "#" :id "footer-places-about")
     (:text "Disclaimers" :href "#" :id "footer-places-disclaimers"))
-  "Links in the footer's link row."
+  "Links in the footer's link row.
+Per file, one link per line, each a Lisp list of (TEXT HREF); a lone nil
+leaves the row empty:
+
+  #+WIKI_FOOTER_PLACES: (\"About\" \"about.html\")"
   :group 'org-wiki
   :type '(repeat plist))
 
 (defcustom org-wiki-footer-notice "Generated from Org mode."
-  "Attribution line in the footer.
-The skin's own credit, its `:credit', follows it on the same line."
+  "Attribution line in the footer, or nil for none.
+The skin's own credit, its `:credit', follows it on the same line.
+Per file: #+WIKI_FOOTER_NOTICE; left empty, it drops the notice."
   :group 'org-wiki
-  :type 'string)
+  :type '(choice (const :tag "None" nil) string))
+
+(defcustom org-wiki-credit t
+  "Whether the footer credits where the skin's design came from.
+Per file: #+WIKI_CREDIT."
+  :group 'org-wiki
+  :type 'boolean)
 
 (defcustom org-wiki-search nil
   "Whether to show the search box.
@@ -615,6 +629,17 @@ the namespace tab itself."
          (or (org-wiki--read-forms (plist-get info :wiki-buttons))
              org-wiki-buttons))))
 
+(defun org-wiki--link-forms (value default)
+  "Return the links VALUE, a keyword's (TEXT HREF) forms, as link plists.
+A lone nil among the forms gives no links at all; no forms give DEFAULT."
+  (let ((forms (org-wiki--read-forms value)))
+    (if (null forms)
+        default
+      (delq nil (mapcar (lambda (form)
+                          (and (consp form)
+                               (list :text (car form) :href (cadr form))))
+                        forms)))))
+
 (defun org-wiki--modified (info)
   "Return when the file INFO exports was last changed, as a Lisp time."
   (let ((file (plist-get info :input-file)))
@@ -663,7 +688,9 @@ returns it, for a skin that draws its own."
                     (org-combine-plists
                      org-wiki-personal-tools
                      (list :links
-                           (append (plist-get org-wiki-personal-tools :links)
+                           (append (org-wiki--link-forms
+                                    (plist-get info :wiki-personal)
+                                    (plist-get org-wiki-personal-tools :links))
                                    (list (list :text "Log in" :id "pt-login"
                                                :accesskey "o"
                                                :href (or (plist-get info :wiki-login-url)
@@ -681,15 +708,21 @@ returns it, for a skin that draws its own."
                         (list (org-wiki--last-edited info)
                               (and (org-string-nw-p author)
                                    (format "Written by %s." author))
-                              (org-wiki--esc
-                               (string-join
-                                (delq nil
-                                      (list org-wiki-footer-notice
-                                            (plist-get (org-wiki--skin
-                                                        (org-wiki--skin-name info))
-                                                       :credit)))
-                                "  "))))
-     :footer-places org-wiki-footer-places
+                              (let ((notice
+                                     (string-join
+                                      (delq nil
+                                            (list (org-string-nw-p
+                                                   (or (plist-get info :wiki-footer-notice)
+                                                       org-wiki-footer-notice))
+                                                  (and (org-wiki--flag
+                                                        (plist-get info :wiki-credit))
+                                                       (plist-get (org-wiki--skin
+                                                                   (org-wiki--skin-name info))
+                                                                  :credit))))
+                                      "  ")))
+                                (and (org-string-nw-p notice) (org-wiki--esc notice)))))
+     :footer-places (org-wiki--link-forms (plist-get info :wiki-footer-places)
+                                          org-wiki-footer-places)
      :footer-buttons (org-wiki--buttons info)
      :head (plist-get info :wiki-head))))
 
@@ -969,6 +1002,10 @@ none of its own from an #+ATTR_HTML line."
     (:wiki-search-action "WIKI_SEARCH" nil org-wiki-search-action t)
     (:wiki-login "WIKI_LOGIN" nil org-wiki-login t)
     (:wiki-login-url "WIKI_LOGIN_URL" nil org-wiki-login-url t)
+    (:wiki-personal "WIKI_PERSONAL" nil nil space)
+    (:wiki-footer-places "WIKI_FOOTER_PLACES" nil nil space)
+    (:wiki-footer-notice "WIKI_FOOTER_NOTICE" nil nil t)
+    (:wiki-credit "WIKI_CREDIT" nil org-wiki-credit t)
     (:wiki-latex "WIKI_LATEX" nil org-wiki-latex t)
     (:wiki-pdf "WIKI_PDF" nil org-wiki-pdf t)
     (:wiki-git "WIKI_GIT" nil org-wiki-git t)))
